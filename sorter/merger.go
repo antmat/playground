@@ -72,6 +72,9 @@ func (m *merger) readString(fileIdx int) error {
 
 	str, err := reader.ReadString('\n')
 	if err != nil {
+		if len(str) != 0 {
+			str = str + "\n"
+		}
 		if err == io.EOF {
 			m.readers[fileIdx] = nil
 		} else {
@@ -80,11 +83,14 @@ func (m *merger) readString(fileIdx int) error {
 	}
 	if len(str) != 0 {
 		m.topStrings[fileIdx] = &str
+	} else {
+		m.topStrings[fileIdx] = nil
 	}
 	return nil
 }
 
 func (m *merger) initializeTopStrings() error {
+	m.topStrings = make([]*string, len(m.readers))
 	for idx := range m.readers {
 		if err := m.readString(idx); err != nil {
 			return err
@@ -99,6 +105,7 @@ func (m *merger) readTopString() (*string, error) {
 	for idx, str := range m.topStrings {
 		if min == nil {
 			min = str
+			minIdx = idx
 		} else {
 			if str != nil && *str < *min {
 				min = str

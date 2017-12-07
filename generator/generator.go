@@ -1,23 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"math/rand"
 	"bufio"
-	"io"
+	"fmt"
+	"math/rand"
+	"os"
 )
 
 const (
-	B  uint64 = 1
-	Kb          = B << 10
-	Mb          = Kb << 10
-	Gb          = Mb << 10
-	Tb          = Gb << 10
-	MaxFileSize = 100 * Gb
+	B           uint64 = 1
+	Kb                 = B << 10
+	Mb                 = Kb << 10
+	Gb                 = Mb << 10
+	Tb                 = Gb << 10
+	MaxFileSize        = 100 * Gb
 
 	MaxLineLength = 1 * Mb
-	BufferSize = 10 * Mb
+	BufferSize    = 10 * Mb
 )
 
 type Generator interface {
@@ -35,22 +34,19 @@ func NewGenerator(outfile string, lineCount uint64, lineLength uint64) (Generato
 	}
 
 	return &generator{
-		outfile: outfile,
-		lineCount: lineCount,
+		outfile:    outfile,
+		lineCount:  lineCount,
 		lineLength: lineLength,
-		wr: nil,
 	}, nil
 }
 
 type generator struct {
-	outfile string
-	lineCount uint64
+	outfile    string
+	lineCount  uint64
 	lineLength uint64
-
-	wr io.ByteWriter
 }
 
-func (g *generator) appendString() {
+func (g *generator) appendString(writer *bufio.Writer) {
 	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lettersCnt := int32(len(letters))
 
@@ -67,22 +63,23 @@ func (g *generator) appendString() {
 		// use (shift/8) byte from random number
 		idx := (random & (0xff << shift)) >> shift
 		shift = shift + 8
-		g.wr.WriteByte(letters[idx % uint64(lettersCnt)])
+		writer.WriteByte(letters[idx%uint64(lettersCnt)])
 	}
-	g.wr.WriteByte('\n')
+	writer.WriteByte('\n')
 }
 
-func(g *generator) Run() error {
+func (g *generator) Run() error {
 	file, err := os.Create(g.outfile)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	g.wr = bufio.NewWriter(file)
+	writer := bufio.NewWriter(file)
+	defer writer.Flush()
 
-	for line := uint64(0); line < g.lineCount; line++{
-		g.appendString()
+	for line := uint64(0); line < g.lineCount; line++ {
+		g.appendString(writer)
 	}
 	return nil
 }

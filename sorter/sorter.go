@@ -95,7 +95,7 @@ func (s *sorter) splitAndSort() error {
 
 	for {
 		part, err := s.readAndSortPart(reader)
-		if part != nil {
+		if part != nil && len(part) > 0 {
 			if err := s.writeTmpFile(part); err != nil {
 				return err
 			}
@@ -120,18 +120,16 @@ func (s *sorter) readAndSortPart(reader *bufio.Reader) ([]string, error) {
 
 	for read < s.tmpFileSize {
 		str, err := reader.ReadString('\n')
-		strings = append(strings, str)
-		read += uint64(len(str))
-		if err != nil {
-			if err == io.EOF {
-				break
-			} else {
-				return strings, err
+		if len(str) != 0 {
+			if err != nil {
+				str = str + "\n"
 			}
+			strings = append(strings, str)
+			read += uint64(len(str))
 		}
-	}
-	if len(strings) == 0 {
-		panic("huy")
+		if err != nil {
+			return strings, err
+		}
 	}
 	return strings, nil
 }
@@ -153,11 +151,26 @@ func (s *sorter) writeTmpFile(sortedData []string) error {
 }
 
 func (s *sorter) mergeSortedFiles() error {
+	if s.tmpFileIndex == 1 {
+		return os.Rename(s.tmpFileName(0), s.outfile)
+	}
 	files := make([]string, 0, s.tmpFileIndex)
 	for i := uint(0); i < s.tmpFileIndex; i++ {
 		files = append(files, s.tmpFileName(i))
 	}
 
 	merger := NewMerger(files, s.outfile)
-	return merger.Merge()
+	if err := merger.Merge(); err != nil {
+		return err
+	}
+	return s.removeTmpFiles()
+}
+
+func (s *sorter) removeTmpFiles() error {
+	for i := uint(0); i < s.tmpFileIndex; i++ {
+		if err := os.Remove(s.tmpFileName(i)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
