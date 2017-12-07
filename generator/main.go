@@ -23,12 +23,12 @@ func main() {
 
 	lineCount, err :=  strconv.ParseUint(lineCountStr, 10, 64)
 	if err != nil {
-		printErrorAndExit(err)
+		printErrorAndExit(fmt.Errorf("could not parse line_count - %s", err))
 	}
 
 	lineLength, err := strconv.ParseUint(lineLengthStr, 10, 64)
 	if err != nil {
-		printErrorAndExit(err)
+		printErrorAndExit(fmt.Errorf("could not parse line_length - %s", err))
 	}
 
 	g, err := NewGenerator(outfile, lineCount, lineLength)

@@ -26,12 +26,12 @@ type Generator interface {
 
 func NewGenerator(outfile string, lineCount uint64, lineLength uint64) (Generator, error) {
 	if lineLength > MaxLineLength || lineLength == 0 {
-		printErrorAndExit(fmt.Errorf("line length can not be zero or greater than %d (got %d)", MaxLineLength, lineLength))
+		return nil, fmt.Errorf("line length can not be zero or greater than %d (got %d)", MaxLineLength, lineLength)
 	}
 
 	fileSize := lineLength * lineCount
 	if fileSize > MaxFileSize {
-		printErrorAndExit(fmt.Errorf("resulting file size is too big (%d, maximum is %d)", fileSize, MaxLineLength))
+		return nil, fmt.Errorf("resulting file size is too big (%d, maximum is %d)", fileSize, MaxLineLength)
 	}
 
 	return &generator{
