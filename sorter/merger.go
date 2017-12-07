@@ -73,6 +73,8 @@ func (m *merger) readString(fileIdx int) error {
 		return nil
 	}
 
+	// TODO: This can result in OOM for huge lines,
+	// Consider using some kind of limited buffer reader or even iobuf.Scanner
 	str, err := reader.ReadString('\n')
 	if err != nil {
 		if len(str) != 0 {

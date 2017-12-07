@@ -159,6 +159,7 @@ func (s *sorter) mergeSortedFiles() error {
 		files = append(files, s.tmpFileName(i))
 	}
 
+	//TODO: Add recursive sorting for big amount of files (>100)
 	merger := NewMerger(files, s.outfile)
 	if err := merger.Merge(); err != nil {
 		return err
