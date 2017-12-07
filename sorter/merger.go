@@ -22,15 +22,18 @@ func NewMerger(paths []string, outPath string) Merger {
 }
 
 func (m *merger) Merge() error {
+	// Always create file even if it is empty
 	out, err := os.Create(m.outPath)
-	defer out.Close()
-
-	writer := bufio.NewWriter(out)
-	defer writer.Flush()
-
 	if err != nil {
 		return err
 	}
+	defer out.Close()
+
+	if len(m.paths) == 0 {
+		return nil
+	}
+	writer := bufio.NewWriter(out)
+	defer writer.Flush()
 
 	files := make([]*os.File, 0)
 	defer func() {
@@ -112,6 +115,9 @@ func (m *merger) readTopString() (*string, error) {
 				minIdx = idx
 			}
 		}
+	}
+	if min == nil {
+		return min, nil
 	}
 	if err := m.readString(minIdx); err != nil {
 		return nil, err
